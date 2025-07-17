@@ -8,8 +8,8 @@ PROVIDER_MAP = {
 def build_providers(config: dict):
     """
     Convert a dict like
-        {"stripe": {"api_key": "..."},
-         "walleot": {"api_key": "..."}}
+        {"stripe": {"apiKey": "..."},
+         "walleot": {"apiKey": "..."}}
     into {"stripe": StripeProvider(...), "walleot": WalleotProvider(...)}.
     """
     instances = {}

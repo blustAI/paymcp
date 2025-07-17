@@ -6,8 +6,8 @@ import requests
 class BasePaymentProvider(ABC):
     """Minimal interface every provider must implement."""
 
-    def __init__(self, api_key: str, logger: logging.Logger = None):
-        self.api_key = api_key
+    def __init__(self, api_key: str = None, apiKey: str = None, logger: logging.Logger = None):
+        self.api_key = api_key if api_key is not None else apiKey
         self.logger = logger or logging.getLogger(self.__class__.__name__)
 
     def _build_headers(self) -> dict:

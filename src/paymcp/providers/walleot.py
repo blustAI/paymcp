@@ -8,10 +8,11 @@ BASE_URL = "https://api.walleot.com/v1"
 class WalleotProvider(BasePaymentProvider):
     def __init__(
         self,
-        api_key: str,
+        api_key: str = None, 
+        apiKey: str = None,
         logger: logging.Logger = None,
     ):
-        super().__init__(api_key, logger=logger)
+        super().__init__(api_key, apiKey, logger=logger)
         self.logger.debug(f"Walleot ready")
 
     def _build_headers(self) -> dict:

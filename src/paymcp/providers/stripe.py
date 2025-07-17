@@ -6,12 +6,13 @@ BASE_URL = "https://api.stripe.com/v1"
 class StripeProvider(BasePaymentProvider):
     def __init__(
         self,
-        api_key: str,
+        api_key: str = None, 
+        apiKey: str = None,
         success_url: str = 'https://yoururl.com/success?session_id={CHECKOUT_SESSION_ID}',
         cancel_url: str = 'https://yoururl.com/cancel',
         logger: logging.Logger = None,
     ):
-        super().__init__(api_key, logger=logger)
+        super().__init__(api_key, apiKey, logger=logger)
         self.success_url = success_url
         self.cancel_url = cancel_url
         self.logger.debug("Stripe ready")

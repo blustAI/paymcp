@@ -56,7 +56,7 @@ mcp = FastMCP("AI agent name")
 PayMCP(
     mcp,  # your FastMCP instance
     providers={
-        "provider_name": {"api_key": "your-api-key-here"},
+        "provider_name": {"apiKey": "your-api-key-here"},
     },
     payment_flow=PaymentFlow.ELICITATION
 )
