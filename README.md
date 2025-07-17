@@ -43,14 +43,16 @@ All flows require the MCP client to support the corresponding interaction patter
 
 Install the SDK from PyPI:
 ```bash
-pip install paymcp
+pip install mcp paymcp
 ```
 
 Initialize `PayMCP`:
 
 ```python
+from mcp.server.fastmcp import FastMCP, Context
 from paymcp import PayMCP, price, PaymentFlow
 
+mcp = FastMCP("AI agent name")
 PayMCP(
     mcp,  # your FastMCP instance
     providers={
@@ -65,7 +67,8 @@ Use the `@price` decorator on any tool:
 ```python
 @mcp.tool()
 @price(amount=0.19, currency="USD")
-def add(a: int, b: int) -> int:
+def add(a: int, b: int, ctx: Context) -> int:
+    # `ctx` is required by the PayMCP tool signature — include it even if unused
     return a + b
 ```
 
