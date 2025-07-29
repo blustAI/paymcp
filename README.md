@@ -72,6 +72,9 @@ def add(a: int, b: int, ctx: Context) -> int:
     return a + b
 ```
 
+> **Demo server:** For a complete setup, see the example repo: [python-paymcp-server-demo](https://github.com/blustAI/python-paymcp-server-demo).
+
+
 ---
 
 ## 🧩 Supported Providers
