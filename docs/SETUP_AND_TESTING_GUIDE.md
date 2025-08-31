@@ -41,8 +41,8 @@ You'll need accounts with payment providers for full testing:
 
 ### Step 1: Clone Repository
 ```bash
-git clone https://github.com/your-org/paymcp-main.git
-cd paymcp-main
+git clone https://github.com/blustAI/paymcp.git
+cd paymcp
 ```
 
 ### Step 2: Create Virtual Environment
