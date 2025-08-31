@@ -51,8 +51,8 @@ pip install mcp paymcp
 For detailed setup with all providers, see our [Complete Setup Guide](docs/SETUP_AND_TESTING_GUIDE.md).
 
 ```bash
-git clone https://github.com/your-org/paymcp-main.git
-cd paymcp-main
+git clone https://github.com/blustAI/paymcp.git
+cd paymcp
 pip install -e ".[test,dev]"
 ```
 
@@ -117,8 +117,8 @@ For development and testing, use our automated setup:
 
 ```bash
 # Clone and setup
-git clone https://github.com/your-org/paymcp-main.git
-cd paymcp-main
+git clone https://github.com/blustAI/paymcp.git
+cd paymcp
 
 # Interactive environment setup
 python scripts/setup_test_env.py --interactive
