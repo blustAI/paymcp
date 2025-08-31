@@ -7,7 +7,7 @@ This guide explains how to test the PayMCP MCP (Model Context Protocol) server f
 1. **Environment Setup**
    ```bash
    # Make sure you're in the project root
-   cd paymcp-main
+   cd paymcp
    
    # Install dependencies (if not already done)
    pip install -e ".[test,dev]"
