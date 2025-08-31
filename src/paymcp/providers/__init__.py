@@ -1,9 +1,13 @@
 from .stripe import StripeProvider
-from .walleot import WalleotProvider   
+from .walleot import WalleotProvider
+from .paypal import PayPalProvider
+
 PROVIDER_MAP = {
     "stripe": StripeProvider,
-    "walleot": WalleotProvider
+    "walleot": WalleotProvider,
+    "paypal": PayPalProvider
 }
+
 
 def build_providers(config: dict):
     """

@@ -1,31 +1,38 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuple, Optional
 import logging
 import requests
 
+
 class BasePaymentProvider(ABC):
-    """Minimal interface every provider must implement."""
+    """
+    Base payment provider interface for backward compatibility.
+
+    This class is maintained for compatibility with existing Stripe provider.
+    """
 
     def __init__(self, api_key: str = None, apiKey: str = None, logger: logging.Logger = None):
         self.api_key = api_key if api_key is not None else apiKey
         self.logger = logger or logging.getLogger(self.__class__.__name__)
 
     def _build_headers(self) -> dict:
+        """Build headers for legacy providers."""
         return {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
     def _request(self, method: str, url: str, data: dict = None):
+        """Make HTTP request for legacy providers."""
         headers = self._build_headers()
         try:
             if method.upper() == "GET":
-                resp = requests.get(url, headers=headers, params=data)
+                resp = requests.get(url, headers=headers, params=data, timeout=30)
             elif method.upper() == "POST":
                 if headers.get("Content-Type") == "application/json":
-                    resp = requests.post(url, headers=headers, json=data)
+                    resp = requests.post(url, headers=headers, json=data, timeout=30)
                 else:
-                    resp = requests.post(url, headers=headers, data=data)
+                    resp = requests.post(url, headers=headers, data=data, timeout=30)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
             resp.raise_for_status()
@@ -51,4 +58,6 @@ class BasePaymentProvider(ABC):
 
     @abstractmethod
     def get_payment_status(self, payment_id: str) -> str:
-        """Return payment status."""
+        """
+        Return payment status.
+        """

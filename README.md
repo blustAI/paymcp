@@ -12,6 +12,7 @@
 - 🔁 Choose between different payment flows (elicit, confirm, etc.)
 - 🔌 Pluggable support for providers like Walleot, Stripe, and more
 - ⚙️ Easy integration with `FastMCP` or other MCP servers
+- 🎯 **Context Support**: Automatic injection of payment, user, and execution data
 
 ---
 
@@ -41,24 +42,47 @@ All flows require the MCP client to support the corresponding interaction patter
 
 ## 🚀 Quickstart
 
-Install the SDK from PyPI:
+**Production Installation:**
 ```bash
 pip install mcp paymcp
+```
+
+**Development Setup:**
+For detailed setup with all providers, see our [Complete Setup Guide](docs/SETUP_AND_TESTING_GUIDE.md).
+
+```bash
+git clone https://github.com/your-org/paymcp-main.git
+cd paymcp-main
+pip install -e ".[test,dev]"
 ```
 
 Initialize `PayMCP`:
 
 ```python
-from mcp.server.fastmcp import FastMCP, Context
-from paymcp import PayMCP, price, PaymentFlow
+from mcp.server.fastmcp import FastMCP
+from paymcp import PayMCP, Context, price
+from paymcp.payment.payment_flow import PaymentFlow
 
 mcp = FastMCP("AI agent name")
+
+# Configure providers
+providers = {
+    "paypal": {
+        "client_id": "your_paypal_client_id",
+        "client_secret": "your_paypal_client_secret", 
+        "sandbox": True,
+        "return_url": "https://yourapp.com/success",
+        "cancel_url": "https://yourapp.com/cancel"
+    },
+    "stripe": {
+        "api_key": "sk_test_your_stripe_key"
+    }
+}
+
 PayMCP(
     mcp,  # your FastMCP instance
-    providers={
-        "provider_name": {"apiKey": "your-api-key-here"},
-    },
-    payment_flow=PaymentFlow.ELICITATION
+    providers=providers,
+    payment_flow=PaymentFlow.TWO_STEP  # Recommended default
 )
 ```
 
@@ -66,21 +90,50 @@ Use the `@price` decorator on any tool:
 
 ```python
 @mcp.tool()
-@price(amount=0.19, currency="USD")
+@price(price=0.19, currency="USD")  # Note: 'price' parameter name
 def add(a: int, b: int, ctx: Context) -> int:
-    # `ctx` is required by the PayMCP tool signature — include it even if unused
+    # `ctx` is automatically injected by PayMCP with payment/user/execution data
+    payment_amount = ctx.payment.amount    # 0.19
+    currency = ctx.payment.currency        # "USD"
+    request_id = ctx.execution.request_id  # Auto-generated UUID
     return a + b
 ```
 
 > **Demo server:** For a complete setup, see the example repo: [python-paymcp-server-demo](https://github.com/blustAI/python-paymcp-server-demo).
 
+---
+
+## 📖 Documentation
+
+- 📚 **[Documentation Index](docs/README.md)** - Complete documentation overview
+- 🚀 **[Setup & Testing Guide](docs/SETUP_AND_TESTING_GUIDE.md)** - Comprehensive instructions for all providers
+- 🧪 **[MCP Server Testing](docs/MCP_TESTING_README.md)** - MCP server validation and testing
+- 🎯 **[Context Support](docs/CONTEXT_SUPPORT.md)** - Automatic payment, user, and execution data injection
+- 💳 **[PayPal Provider Guide](src/paymcp/providers/paypal/README.md)** - Detailed PayPal integration docs
+
+### Quick Setup
+
+For development and testing, use our automated setup:
+
+```bash
+# Clone and setup
+git clone https://github.com/your-org/paymcp-main.git
+cd paymcp-main
+
+# Interactive environment setup
+python scripts/setup_test_env.py --interactive
+
+# Run comprehensive tests
+python scripts/test_all_providers.py --verbose
+```
 
 ---
 
 ## 🧩 Supported Providers
 
-- ✅ [Walleot](https://walleot.com/developers)
-- ✅ Stripe
+- ✅ **PayPal** - Professional PayPal integration with sandbox/production support
+- ✅ **Stripe** - Popular payment processing with comprehensive features  
+- ✅ **Walleot** - [Walleot](https://walleot.com/developers) payment provider
 - 🔜 Want another provider? Open an issue or submit a pull request!
 
 ---
