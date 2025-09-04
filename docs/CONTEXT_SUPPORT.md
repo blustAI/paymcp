@@ -1033,5 +1033,3 @@ Key benefits:
 - **Backward Compatible**: Existing functions continue to work
 - **Error Resilience**: Graceful handling of missing context data
 - **Performance Optimized**: Minimal overhead, created only when needed
-
-This feature enables you to build more sophisticated, context-aware payment tools while maintaining the simplicity of existing PayMCP decorators.

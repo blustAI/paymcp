@@ -590,4 +590,3 @@ print("🎉 Test completed!")          # Completion
 | `test_mcp_protocol.py` | ~0.5 seconds | 0 (simulation) | Low | Medium |
 | `test_mcp_workflow.py` | ~1-2 seconds | 2-4 payments | Medium | Medium |
 
-All scripts are optimized for rapid execution while providing comprehensive validation of PayMCP MCP server functionality.

@@ -1,9 +1,5 @@
 # PayMCP Complete Setup and Testing Guide
 
-**Comprehensive guide to set up, configure, and test PayMCP with all payment providers (PayPal, Stripe, Walleot)**
-
----
-
 ## 📋 Table of Contents
 
 1. [Prerequisites](#prerequisites)
@@ -749,47 +745,3 @@ python -c "from paymcp.providers.paypal import PayPalConfig; print(PayPalConfig.
 # 📊 Run pytest directly
 pytest tests/unit/paypal/ -v --cov=src/paymcp/providers/paypal
 ```
-
-### File Structure
-
-```
-paymcp-main/
-├── 📋 docs/
-│   ├── SETUP_AND_TESTING_GUIDE.md    # This guide
-│   ├── MCP_TESTING_COMPREHENSIVE.md  # MCP testing details
-│   └── CONTEXT_SUPPORT.md            # Context system docs
-├── 🧪 tests/
-│   ├── unit/
-│   │   ├── paypal/                    # PayPal unit tests
-│   │   │   ├── test_config.py         # Config tests (90% coverage)
-│   │   │   ├── test_validator.py      # Validator tests (90% coverage)
-│   │   │   ├── test_paypal_provider.py # Provider tests (85% coverage)
-│   │   │   └── test_integration.py    # Integration tests
-│   │   └── test_context.py            # Context tests (100% coverage)
-│   └── mcp/                           # MCP workflow tests
-├── 🤖 scripts/
-│   ├── setup_test_env.py              # Environment setup
-│   ├── test_all_providers.py          # Comprehensive tests
-│   ├── quick_test.sh                  # Quick test script
-│   └── full_test.sh                   # Full test suite
-├── 📦 src/paymcp/
-│   ├── providers/
-│   │   ├── paypal/                    # PayPal provider module
-│   │   │   ├── provider.py            # Main provider
-│   │   │   ├── config.py              # Configuration
-│   │   │   ├── validator.py           # Validation
-│   │   │   └── 📋 README.md           # PayPal docs
-│   │   ├── stripe.py                  # Stripe provider  
-│   │   └── walleot.py                 # Walleot provider
-│   ├── context.py                     # Context system (100% coverage)
-│   └── 🎯 __init__.py                 # Main PayMCP class
-└── 🔧 pyproject.toml                  # Dependencies
-```
-
----
-
-**🎉 You're all set! PayMCP is ready for building amazing paid AI tools.**
-
-<function_calls>
-<invoke name="TodoWrite">
-<parameter name="todos">[{"content": "Create comprehensive MCP setup and testing guide", "status": "completed", "activeForm": "Creating comprehensive MCP setup and testing guide"}, {"content": "Create automated test script for all providers", "status": "in_progress", "activeForm": "Creating automated test script for all providers"}, {"content": "Document step-by-step setup instructions", "status": "completed", "activeForm": "Documenting step-by-step setup instructions"}]
