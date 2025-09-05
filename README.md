@@ -12,7 +12,7 @@
 - 🔁 Choose between different payment flows (elicit, confirm, etc.)
 - 🔌 Pluggable support for providers like Walleot, Stripe, and more
 - ⚙️ Easy integration with `FastMCP` or other MCP servers
-- 🎯 **Context Support**: Automatic injection of payment, user, and execution data
+- 🎯 **MCP Context Integration**: Seamless integration with MCP's built-in Context system
 
 ---
 
@@ -60,7 +60,7 @@ Initialize `PayMCP`:
 
 ```python
 from mcp.server.fastmcp import FastMCP
-from paymcp import PayMCP, Context, price
+from paymcp import PayMCP, price
 from paymcp.payment.payment_flow import PaymentFlow
 
 mcp = FastMCP("AI agent name")
@@ -90,14 +90,14 @@ Use the `@price` decorator on any tool:
 
 ```python
 @mcp.tool()
-@price(price=0.19, currency="USD")  # Note: 'price' parameter name
+@price(price=0.19, currency="USD")
 def add(a: int, b: int, ctx: Context) -> int:
-    # `ctx` is automatically injected by PayMCP with payment/user/execution data
-    payment_amount = ctx.payment.amount    # 0.19
-    currency = ctx.payment.currency        # "USD"
-    request_id = ctx.execution.request_id  # Auto-generated UUID
+    # `ctx` is automatically injected by MCP's built-in Context system
+    # Access payment, user, and execution information
     return a + b
 ```
+
+**MCP Context Integration:** PayMCP seamlessly integrates with MCP's built-in Context system. Simply add a `ctx: Context` parameter to any paid function, and MCP will automatically inject payment and execution data.
 
 > **Demo server:** For a complete setup, see the example repo: [python-paymcp-server-demo](https://github.com/blustAI/python-paymcp-server-demo).
 
@@ -108,7 +108,6 @@ def add(a: int, b: int, ctx: Context) -> int:
 - 📚 **[Documentation Index](docs/README.md)** - Complete documentation overview
 - 🚀 **[Setup & Testing Guide](docs/SETUP_AND_TESTING_GUIDE.md)** - Comprehensive instructions for all providers
 - 🧪 **[MCP Server Testing](docs/MCP_TESTING_README.md)** - MCP server validation and testing
-- 🎯 **[Context Support](docs/CONTEXT_SUPPORT.md)** - Automatic payment, user, and execution data injection
 - 💳 **[PayPal Provider Guide](src/paymcp/providers/paypal/README.md)** - Detailed PayPal integration docs
 
 ### Quick Setup

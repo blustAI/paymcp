@@ -10,8 +10,8 @@ Welcome to the PayMCP documentation! This directory contains comprehensive guide
 ### Setup & Configuration
 - **[SETUP_AND_TESTING_GUIDE.md](./SETUP_AND_TESTING_GUIDE.md)** - Complete setup guide for PayMCP with all providers, testing instructions, and troubleshooting
 
-### Core Features
-- **[CONTEXT_SUPPORT.md](./CONTEXT_SUPPORT.md)** - Automatic Context injection for payment, user, and execution data access
+### MCP Integration
+- PayMCP seamlessly integrates with MCP's built-in Context system - no additional setup required
 
 ### MCP Testing  
 - **[MCP_TESTING_README.md](./MCP_TESTING_README.md)** - Quick start guide for MCP server testing with usage examples
@@ -53,7 +53,7 @@ python tests/mcp/test_mcp_server.py
 |------|---------|----------|
 | **Project Info** | Structure & organization | Contributors |
 | **Setup Guide** | Installation & configuration | All users |
-| **Context Support** | Context injection & data access | All users |
+| **MCP Integration** | Built-in Context support | All users |
 | **MCP Testing** | Server testing & validation | Developers |
 | **Deep Dive** | Technical implementation details | Advanced users |
 
