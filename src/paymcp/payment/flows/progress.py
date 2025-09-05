@@ -2,7 +2,8 @@
 import asyncio
 import functools
 from typing import Any, Dict, Optional
-from ...utils.messages import payment_prompt_message
+from ...utils.messages import open_link_message, opened_webview_message
+from ..webview import open_payment_webview_if_available
 
 DEFAULT_POLL_SECONDS = 3          # how often to poll provider.get_payment_status
 MAX_WAIT_SECONDS = 15 * 60        # give up after 15 min 
@@ -36,15 +37,22 @@ def make_paid_wrapper(
                     total=100,
                 )
 
+        if (open_payment_webview_if_available(payment_url)):
+            message = opened_webview_message(
+                payment_url, price_info["price"], price_info["currency"]
+            )
+        else:
+            message = open_link_message(
+                payment_url, price_info["price"], price_info["currency"]
+            )
+
         # Initial message with the payment link
         await _notify(
-            payment_prompt_message(
-                payment_url, price_info["price"], price_info["currency"]
-            ),
+            message,
             progress=0,
         )
 
-        # Poll provider until paid, cancelled, or timeout
+        # Poll provider until paid, canceled, or timeout
         waited = 0
         while waited < MAX_WAIT_SECONDS:
             await asyncio.sleep(DEFAULT_POLL_SECONDS)
@@ -56,7 +64,7 @@ def make_paid_wrapper(
                 await _notify("Payment received — generating result …", progress=100)
                 break
 
-            if status in ("cancelled", "expired", "failed"):
+            if status in ("canceled", "expired", "failed"):
                 raise RuntimeError(f"Payment status is {status}, expected 'paid'")
 
             # Still pending → ping progress

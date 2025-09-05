@@ -3,7 +3,7 @@
 
 # paymcp/payment/flows/oob.py
 import functools
-from ...utils.messages import payment_prompt_message
+from ...utils.messages import open_link_message
 import logging
 from ...utils.elicitation import run_elicitation_loop
 

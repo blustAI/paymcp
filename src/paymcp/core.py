@@ -4,9 +4,18 @@ from .providers import build_providers
 from .utils.messages import description_with_price
 from .payment.flows import make_flow
 from .payment.payment_flow import PaymentFlow
+from importlib.metadata import version, PackageNotFoundError
+import logging
+logger = logging.getLogger(__name__)
+
+try:
+    __version__ = version("paymcp")
+except PackageNotFoundError:
+    __version__ = "unknown"
 
 class PayMCP:
     def __init__(self, mcp_instance, providers=None, payment_flow: PaymentFlow = PaymentFlow.TWO_STEP):
+        logger.debug(f"PayMCP v{__version__}")
         flow_name = payment_flow.value
         self._wrapper_factory = make_flow(flow_name)
         self.mcp = mcp_instance

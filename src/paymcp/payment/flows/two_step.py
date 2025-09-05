@@ -1,8 +1,8 @@
 # paymcp/payment/flows/two_step.py
 import functools
 from typing import Dict, Any
-from ...utils.messages import payment_prompt_message
-from typing import cast
+from ...utils.messages import open_link_message, opened_webview_message
+from ..webview import open_payment_webview_if_available
 import logging
 logger = logging.getLogger(__name__)
 
@@ -52,9 +52,15 @@ def make_paid_wrapper(func, mcp, provider, price_info):
             currency=price_info["currency"],
             description=f"{func.__name__}() execution fee"
         )
-        message = payment_prompt_message(
-            payment_url, price_info["price"], price_info["currency"]
-        )
+
+        if (open_payment_webview_if_available(payment_url)):
+            message = opened_webview_message(
+                payment_url, price_info["price"], price_info["currency"]
+            )
+        else:
+            message = open_link_message(
+                payment_url, price_info["price"], price_info["currency"]
+            )
 
         pid_str = str(payment_id)
         PENDING_ARGS[pid_str] = kwargs

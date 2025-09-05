@@ -1,7 +1,8 @@
 
 # paymcp/payment/flows/elicitation.py
 import functools
-from ...utils.messages import payment_prompt_message
+from ...utils.messages import open_link_message, opened_webview_message
+from ..webview import open_payment_webview_if_available
 import logging
 from ...utils.elicitation import run_elicitation_loop
 
@@ -24,9 +25,14 @@ def make_paid_wrapper(func, mcp, provider, price_info):
         )
         logger.debug(f"[make_paid_wrapper] Created payment with ID: {payment_id}")
 
-        message = payment_prompt_message(
-            payment_url, price_info["price"], price_info["currency"]
-        )
+        if (open_payment_webview_if_available(payment_url)):
+            message = opened_webview_message(
+                payment_url, price_info["price"], price_info["currency"]
+            )
+        else:
+            message = open_link_message(
+                payment_url, price_info["price"], price_info["currency"]
+            )
 
         # 2. Ask the user to confirm payment
         logger.debug(f"[make_paid_wrapper] Calling elicitation {ctx}")
@@ -39,7 +45,7 @@ def make_paid_wrapper(func, mcp, provider, price_info):
 
         if (payment_status=="paid"):
             logger.info(f"[make_paid_wrapper] Payment confirmed, calling {func.__name__}")
-            return await func(**kwargs) #calling original function
+            return await func(*args,**kwargs) #calling original function
 
         if (payment_status=="canceled"):
             logger.info(f"[make_paid_wrapper] Payment canceled")

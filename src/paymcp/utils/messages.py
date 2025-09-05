@@ -1,8 +1,16 @@
-def payment_prompt_message(url, amount, currency):
+def open_link_message(url, amount, currency):
     return (
-        f"Please follow the link below to pay:\n\n{url}\n\n"
-        f"Amount: {amount} {currency}.\n"
-        "After payment, return here and confirm to continue."
+        f"To run this tool, please pay {amount} {currency} using the link below:\n\n"
+        f"{url}\n\n"
+        "After completing the payment, come back and confirm."
+    )
+
+def opened_webview_message(url, amount, currency):
+    return (
+        f"To run this tool, please pay {amount} {currency}.\n"
+        "A payment window should be open. If not, you can use this link:\n\n"
+        f"{url}\n\n"
+        "After completing the payment, come back and confirm."
     )
 
 def description_with_price(description:str, price_info:dict):

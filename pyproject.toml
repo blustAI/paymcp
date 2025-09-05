@@ -1,6 +1,6 @@
 [project]
 name = "paymcp"
-version = "0.0.5"
+version = "0.1.0"
 description = "Provider-agnostic payment layer for MCP (Model Context Protocol) tools and agents."
 authors = [
     {name = "Blust Inc", email = "info@blust.ai"},
@@ -9,6 +9,10 @@ dependencies = ["requests>=2.32.4", "pydantic>=2.11.7"]
 requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
+
+
+[project.optional-dependencies]
+webview = ["pywebview>=4.0"]        # pip/pdm install paymcp[webview]
 
 [build-system]
 requires = ["pdm-backend"]
