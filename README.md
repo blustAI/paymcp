@@ -77,6 +77,19 @@ def add(a: int, b: int, ctx: Context) -> int:
 
 ---
 
+## 🪟 Optional: WebView (STDIO)
+
+Open the payment link in a native window when your MCP server is connected via the stdio transport (typical for local/desktop installs).
+
+- Install: `pip install paymcp[webview]` (or `pdm add paymcp[webview]`).
+- What it does: when a priced tool is invoked, PayMCP opens a lightweight in-app webview to the provider's `payment_url` so the user can complete checkout without leaving the client.
+- Scope: applies only to stdio connections on the user's machine.
+- Notes: requires a desktop environment.
+
+
+
+---
+
 ## 🧩 Supported Providers
 
 - ✅ [Walleot](https://walleot.com/developers)
