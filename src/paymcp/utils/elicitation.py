@@ -1,5 +1,6 @@
 import inspect
 from .responseSchema import SimpleActionSchema
+from types import SimpleNamespace
 import logging
 logger = logging.getLogger(__name__)
 
@@ -7,6 +8,7 @@ async def run_elicitation_loop(ctx, func, message, provider, payment_id, max_att
     for attempt in range(max_attempts):
         try:
             if "response_type" in inspect.signature(ctx.elicit).parameters:
+                logger.debug(f"[run_elicitation_loop] Attempt {attempt+1},")
                 elicitation = await ctx.elicit(
                     message=message,
                     response_type=None
@@ -18,16 +20,27 @@ async def run_elicitation_loop(ctx, func, message, provider, payment_id, max_att
                 )
         except Exception as e:
             logger.warning(f"[run_elicitation_loop] Elicitation failed: {e}")
-            raise RuntimeError("Elicitation failed during confirmation loop.") from e
+            msg = str(e).lower()
+            if "unexpected elicitation action" in msg:
+                if "accept" in msg:
+                    logger.debug("[run_elicitation_loop] Treating 'accept' action as confirmation")
+                    elicitation = SimpleNamespace(action="accept")
+                elif any(x in msg for x in ("cancel", "decline")):
+                    logger.debug("[run_elicitation_loop] Treating 'cancel/decline' action as user cancellation")
+                    elicitation = SimpleNamespace(action="cancel")
+                else:
+                    raise RuntimeError("Elicitation failed during confirmation loop.") from e
+            else:
+                raise RuntimeError("Elicitation failed during confirmation loop.") from e
 
         logger.debug(f"[run_elicitation_loop] Elicitation response: {elicitation}")
 
         if elicitation.action == "cancel" or elicitation.action == "decline":
             logger.debug("[run_elicitation_loop] User canceled payment")
-            raise RuntimeError("Payment cancelled by user")
+            raise RuntimeError("Payment canceled by user")
 
         status = provider.get_payment_status(payment_id)
-        logger.debug(f"[run_elicitation_loop] Attempt {attempt+1}: payment status = {status}")
+        logger.debug(f"[run_elicitation_loop]: payment status = {status}")
         if status == "paid" or status == "canceled":
             return status 
     return "pending"
