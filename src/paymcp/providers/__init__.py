@@ -1,8 +1,11 @@
 from .stripe import StripeProvider
 from .walleot import WalleotProvider   
+from .adyen import AdyenProvider
+
 PROVIDER_MAP = {
     "stripe": StripeProvider,
-    "walleot": WalleotProvider
+    "walleot": WalleotProvider,
+    "adyen": AdyenProvider
 }
 
 def build_providers(config: dict):
