@@ -1,10 +1,12 @@
 from .stripe import StripeProvider
 from .walleot import WalleotProvider   
 from .adyen import AdyenProvider
+from .paypal import PayPalProvider
 
 PROVIDER_MAP = {
     "stripe": StripeProvider,
     "walleot": WalleotProvider,
+    "paypal": PayPalProvider,
     "adyen": AdyenProvider
 }
 
