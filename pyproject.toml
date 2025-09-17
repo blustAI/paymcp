@@ -1,6 +1,6 @@
 [project]
 name = "paymcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "Provider-agnostic payment layer for MCP (Model Context Protocol) tools and agents."
 authors = [
     {name = "Blust Inc", email = "info@blust.ai"},

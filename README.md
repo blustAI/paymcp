@@ -91,9 +91,9 @@ Open the payment link in a native window when your MCP server is connected via t
 ---
 
 ## 🧩 Supported Providers
-
+- ✅ [Adyen](https://www.adyen.com)
+- ✅ [Stripe](https://stripe.com)
 - ✅ [Walleot](https://walleot.com/developers)
-- ✅ Stripe
 - 🔜 Want another provider? Open an issue or submit a pull request!
 
 ---
