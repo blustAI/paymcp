@@ -27,11 +27,6 @@ def make_paid_wrapper(func, mcp, provider, price_info):
         description=f"Confirm payment and execute {func.__name__}()"
     )
     async def _confirm_tool(payment_id: str):
-        status = provider.get_payment_status(payment_id)
-        if status != "paid":
-            raise RuntimeError(
-                f"Payment status is {status}, expected 'paid'"
-            )
         logger.info(f"[confirm_tool] Received payment_id={payment_id}")
         original_args = PENDING_ARGS.pop(str(payment_id), None)
         logger.debug(f"[confirm_tool] PENDING_ARGS keys: {list(PENDING_ARGS.keys())}")
@@ -39,7 +34,11 @@ def make_paid_wrapper(func, mcp, provider, price_info):
         if original_args is None:
             raise RuntimeError("Unknown or expired payment_id")
         
-
+        status = provider.get_payment_status(payment_id)
+        if status != "paid":
+            raise RuntimeError(
+                f"Payment status is {status}, expected 'paid'"
+            )
         logger.debug(f"[confirm_tool] Calling {func.__name__} with args: {original_args}")
 
         # Call the original tool with its initial arguments
