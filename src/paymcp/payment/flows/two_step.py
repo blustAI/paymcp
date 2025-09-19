@@ -41,7 +41,6 @@ def make_paid_wrapper(func, mcp, provider, price_info, state_store=None):
     )
     async def _confirm_tool(payment_id: str, ctx=None):
         logger.info(f"[confirm_tool] Received payment_id={payment_id}")
-
         # Extract session ID from context using utility
         session_id = extract_session_id(ctx)
 
@@ -68,9 +67,9 @@ def make_paid_wrapper(func, mcp, provider, price_info, state_store=None):
 
         # Fall back to legacy PENDING_ARGS if not found in state store
         if not original_args:
-            original_args = PENDING_ARGS.pop(str(payment_id), None)
+            original_args = PENDING_ARGS.get(str(payment_id), None)
+            logger.debug(f"[confirm_tool] PENDING_ARGS keys: {list(PENDING_ARGS.keys())}")
             logger.debug(f"[confirm_tool] Retrieved args from legacy PENDING_ARGS")
-
         logger.debug(f"[confirm_tool] Retrieved args: {original_args}")
         if original_args is None:
             raise RuntimeError("Unknown or expired payment_id")
@@ -85,9 +84,13 @@ def make_paid_wrapper(func, mcp, provider, price_info, state_store=None):
         # Call the original tool with its initial arguments
         result = await func(**original_args)
 
-        # Clean up state using utility
+        # Clean up based on where we got the args from
         if state_key:
+            # Args came from state store, clean up there
             cleanup_payment_state(state_key, state_store)
+        else:
+            # Args came from legacy PENDING_ARGS, remove from there
+            PENDING_ARGS.pop(str(payment_id), None)
 
         return result
 

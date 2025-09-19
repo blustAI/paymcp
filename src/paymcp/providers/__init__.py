@@ -3,6 +3,7 @@ from .walleot import WalleotProvider
 from .adyen import AdyenProvider
 from .paypal import PayPalProvider
 from .square import SquareProvider
+from .coinbase import CoinbaseProvider
 
 PROVIDER_MAP = {
     "stripe": StripeProvider,
@@ -10,6 +11,7 @@ PROVIDER_MAP = {
     "paypal": PayPalProvider,
     "adyen": AdyenProvider,
     "square": SquareProvider,
+    "coinbase": CoinbaseProvider
 }
 
 def build_providers(config: dict):

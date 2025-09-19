@@ -48,7 +48,6 @@ class AdyenProvider(BasePaymentProvider):
         payment = self._request("GET", f"{self.base_url}/paymentLinks/{payment_id}")
         status = payment.get("status")
 
-        # Маппинг под интерфейс paymcp
         if status == "completed":
             return "paid"
         elif status == "active":
