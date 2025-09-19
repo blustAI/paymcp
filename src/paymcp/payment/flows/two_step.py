@@ -28,7 +28,7 @@ def make_paid_wrapper(func, mcp, provider, price_info):
     )
     async def _confirm_tool(payment_id: str):
         logger.info(f"[confirm_tool] Received payment_id={payment_id}")
-        original_args = PENDING_ARGS.pop(str(payment_id), None)
+        original_args = PENDING_ARGS.get(str(payment_id), None)
         logger.debug(f"[confirm_tool] PENDING_ARGS keys: {list(PENDING_ARGS.keys())}")
         logger.debug(f"[confirm_tool] Retrieved args: {original_args}")
         if original_args is None:
@@ -40,6 +40,8 @@ def make_paid_wrapper(func, mcp, provider, price_info):
                 f"Payment status is {status}, expected 'paid'"
             )
         logger.debug(f"[confirm_tool] Calling {func.__name__} with args: {original_args}")
+
+        del PENDING_ARGS[str(payment_id)]
 
         # Call the original tool with its initial arguments
         return await func(**original_args)
