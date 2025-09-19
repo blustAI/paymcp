@@ -2,8 +2,8 @@
 
 from .core import PayMCP, __version__
 from .decorators import price
-from .payment.payment_flow import PaymentFlow
+from .utils.constants import FlowType
 from .state_store import StateStoreProvider, InMemoryStore, RedisStore
 
 
-__all__ = ["PayMCP", "price", "PaymentFlow", "__version__", "StateStoreProvider", "InMemoryStore", "RedisStore"]
+__all__ = ["PayMCP", "price", "FlowType", "__version__", "StateStoreProvider", "InMemoryStore", "RedisStore"]

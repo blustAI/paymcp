@@ -364,7 +364,7 @@ def make_paid_wrapper(func, mcp, provider, price_info, state_store: Optional['St
         payment_id, payment_url = provider.create_payment(
             amount=price_info["price"],
             currency=price_info["currency"],
-            description=extract_tool_description(func.__name__, 'TWO_STEP')
+            description=extract_tool_description(func.__name__, 'two_step')
         )
 
         if open_payment_webview_if_available(payment_url):

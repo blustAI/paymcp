@@ -91,7 +91,7 @@ def make_paid_wrapper(
             payment_id, payment_url = provider.create_payment(
                 amount=price_info["price"],
                 currency=price_info["currency"],
-                description=extract_tool_description(func.__name__, 'PROGRESS')
+                description=extract_tool_description(func.__name__, 'progress')
             )
 
             # Store payment state

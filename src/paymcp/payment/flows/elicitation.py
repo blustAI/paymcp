@@ -109,7 +109,7 @@ def make_paid_wrapper(func, mcp, provider, price_info, state_store: Optional['St
             payment_id, payment_url = provider.create_payment(
                 amount=price_info["price"],
                 currency=price_info["currency"],
-                description=extract_tool_description(func.__name__, 'ELICITATION')
+                description=extract_tool_description(func.__name__, 'elicitation')
             )
             log_flow(logger, 'Elicitation', 'debug',
                     f"Created payment with ID: {payment_id}")

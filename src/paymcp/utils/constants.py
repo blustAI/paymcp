@@ -1,22 +1,10 @@
 """
 Shared constants for PayMCP system-wide consistency and maintainability.
 
-This module centralizes all constant values used throughout the PayMCP system
-to ensure consistency across different components and prevent hardcoded values
-from being scattered throughout the codebase.
-
-Benefits of centralized constants:
-1. Consistency: All components use the same values for status strings
-2. Maintainability: Single source of truth for changing constants
-3. Type safety: Prevents typos in string literals
-4. Documentation: Clear definition of all possible values
-5. Testing: Easy to mock and verify expected constants
-
-The constants are organized into logical groupings:
-- PaymentStatus: All possible payment states from providers
-- ResponseType: Standardized response statuses for MCP clients
-- Timing: Configurable timing values for timeouts and polling
-- FlowType: Available payment flow implementations
+DESIGN DECISION: Separate from TypeScript constants.ts
+- Python uses seconds (ecosystem standard), TypeScript uses milliseconds
+- Each implementation uses language-appropriate patterns (classes vs const objects)
+- Values are synchronized manually between languages
 """
 
 from enum import Enum
@@ -157,47 +145,22 @@ class Timing:
 
 class FlowType(Enum):
     """
-    Payment flow types available in the PayMCP system.
+    Payment flow types - separate implementations instead of unified flow.
 
-    Each flow type represents a different approach to handling payment and
-    tool execution, optimized for different client capabilities and user
-    experience requirements.
-
-    Flow Characteristics:
-
-    TWO_STEP:
-    - Separate payment initiation and tool execution calls
-    - Best for: Clients that can't handle interactive flows
-    - User flow: Call tool → Get payment URL → Complete payment → Call confirm tool
-    - Pros: Simple client implementation, works with any MCP client
-    - Cons: Requires two tool calls, more complex for users
-
-    PROGRESS:
-    - Single call with progress reporting during payment
-    - Best for: Clients that support progress reporting
-    - User flow: Call tool → See progress updates → Tool completes after payment
-    - Pros: Single call, good UX with progress updates
-    - Cons: Requires progress reporting support
-
-    ELICITATION:
-    - Interactive prompts for payment confirmation
-    - Best for: Clients with elicitation support (Claude Desktop, FastMCP)
-    - User flow: Call tool → Interactive prompt → Complete payment → Tool completes
-    - Pros: Best UX, feels most natural
-    - Cons: Requires elicitation support, not all clients support it
-
-    Client Compatibility:
-    - Claude Desktop: ELICITATION (preferred), PROGRESS, TWO_STEP
-    - MCP Inspector: TWO_STEP only
-    - FastMCP Python: ELICITATION (preferred), TWO_STEP
-    - Custom clients: Depends on capabilities
+    DESIGN DECISION: Why separate flows instead of one unified flow?
+    - Each flow optimized for specific client capabilities (elicitation, progress, basic)
+    - Avoids complex branching logic in unified implementation
+    - Easier testing and maintenance of individual flows
     """
 
     # Two-step flow: separate payment initiation and confirmation
-    TWO_STEP = 'TWO_STEP'
+    TWO_STEP = 'two_step'
 
     # Progress flow: single call with progress reporting
-    PROGRESS = 'PROGRESS'
+    PROGRESS = 'progress'
 
     # Elicitation flow: interactive prompts for payment
-    ELICITATION = 'ELICITATION'
+    ELICITATION = 'elicitation'
+
+    # Out-of-band flow: payment handled externally
+    OOB = 'oob'
