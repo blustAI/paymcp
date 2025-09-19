@@ -1,5 +1,22 @@
 """
-Shared constants for PayMCP
+Shared constants for PayMCP system-wide consistency and maintainability.
+
+This module centralizes all constant values used throughout the PayMCP system
+to ensure consistency across different components and prevent hardcoded values
+from being scattered throughout the codebase.
+
+Benefits of centralized constants:
+1. Consistency: All components use the same values for status strings
+2. Maintainability: Single source of truth for changing constants
+3. Type safety: Prevents typos in string literals
+4. Documentation: Clear definition of all possible values
+5. Testing: Easy to mock and verify expected constants
+
+The constants are organized into logical groupings:
+- PaymentStatus: All possible payment states from providers
+- ResponseType: Standardized response statuses for MCP clients
+- Timing: Configurable timing values for timeouts and polling
+- FlowType: Available payment flow implementations
 """
 
 from enum import Enum
@@ -7,35 +24,180 @@ from typing import Final
 
 
 class PaymentStatus:
-    """Payment status constants"""
+    """
+    Payment status constants used across all payment providers and flows.
+
+    These constants standardize how payment states are represented throughout
+    the system. All payment providers must return these exact string values
+    to ensure consistent handling across different flows and state management.
+
+    Status Lifecycle:
+    1. REQUESTED → PENDING → PAID (successful path)
+    2. REQUESTED → PENDING → CANCELED (user cancellation)
+    3. REQUESTED → PENDING → FAILED (provider error)
+    4. REQUESTED → PENDING → EXPIRED (timeout)
+
+    Each status has specific semantics:
+    - Terminal states: PAID, CANCELED, FAILED, EXPIRED (no further changes)
+    - Active states: REQUESTED, PENDING (can transition to terminal states)
+    - Error states: ERROR, TIMEOUT, UNSUPPORTED (system-level issues)
+
+    Usage by components:
+    - Providers: Must return these exact values from get_payment_status()
+    - State management: Uses these for state transitions and cleanup decisions
+    - Flows: Check these values to determine next actions
+    - Response builders: Map these to appropriate user messages
+    """
+
+    # Successful completion - payment verified and accepted
     PAID: Final = 'paid'
+
+    # Payment is being processed, final status not yet determined
+    # This is the most common intermediate state
     PENDING: Final = 'pending'
+
+    # User explicitly canceled the payment (not a system error)
+    # Can happen through payment provider UI or client cancellation
     CANCELED: Final = 'canceled'
+
+    # Payment timeout - provider gave up waiting
+    # Different from client timeout (TIMEOUT constant)
     EXPIRED: Final = 'expired'
+
+    # Payment failed due to provider error (invalid card, insufficient funds, etc.)
+    # This is a provider-side failure, not a system error
     FAILED: Final = 'failed'
+
+    # System-level error (network issues, malformed requests, etc.)
+    # Different from payment failure (FAILED)
     ERROR: Final = 'error'
+
+    # Client-side timeout (user disconnected while payment was processing)
+    # Payment might still complete on provider side
     TIMEOUT: Final = 'timeout'
+
+    # Initial state when payment is first created
+    # Brief transition state before PENDING
     REQUESTED: Final = 'requested'
+
+    # Payment method is not supported by the provider
+    # Used for graceful degradation
     UNSUPPORTED: Final = 'unsupported'
 
 
 class ResponseType:
-    """MCP response type constants"""
+    """
+    MCP response type constants for consistent client communication.
+
+    These constants define the standardized response statuses that MCP clients
+    expect to receive. They are used in response builders to ensure all
+    payment flows return properly formatted responses.
+
+    These map to but are distinct from PaymentStatus constants:
+    - ResponseType: Client-facing status for MCP protocol
+    - PaymentStatus: Provider-specific payment state
+
+    Mapping examples:
+    - PaymentStatus.PAID → ResponseType.SUCCESS
+    - PaymentStatus.PENDING → ResponseType.PENDING
+    - PaymentStatus.CANCELED → ResponseType.CANCELED
+    - PaymentStatus.FAILED → ResponseType.ERROR
+    """
+
+    # Tool execution completed successfully after payment
+    # Indicates both payment and tool execution succeeded
     SUCCESS: Final = 'success'
+
+    # An error occurred during payment or tool execution
+    # Covers both payment failures and system errors
     ERROR: Final = 'error'
+
+    # Payment is required and in progress
+    # User needs to complete payment before tool can execute
     PENDING: Final = 'pending'
+
+    # Payment was canceled by user or system
+    # Tool execution did not occur
     CANCELED: Final = 'canceled'
 
 
 class Timing:
-    """Timing constants"""
-    DEFAULT_POLL_SECONDS: Final = 3  # Poll every 3 seconds
-    MAX_WAIT_SECONDS: Final = 15 * 60  # 15 minutes timeout
-    STATE_TTL_SECONDS: Final = 30 * 60  # 30 minutes state TTL
+    """
+    Timing constants for payment flow behavior and performance tuning.
+
+    These values control various timing aspects of payment flows and can be
+    adjusted based on performance requirements and user experience needs.
+
+    Considerations for timing values:
+    - Shorter polls = better responsiveness, more API calls
+    - Longer timeouts = better for slow payment methods, more resource usage
+    - Longer TTL = better recovery, more memory usage
+
+    Production tuning:
+    - Increase poll intervals for high-volume scenarios
+    - Decrease timeouts for fast payment methods
+    - Adjust TTL based on expected session lengths
+    """
+
+    # How often to check payment status during active polling
+    # Balance between responsiveness and API call frequency
+    # 3 seconds provides good UX without overwhelming providers
+    DEFAULT_POLL_SECONDS: Final = 3
+
+    # Maximum time to wait for payment completion before giving up
+    # 15 minutes allows for slow payment methods (bank transfers, etc.)
+    # After this timeout, payments may still complete but won't trigger tools
+    MAX_WAIT_SECONDS: Final = 15 * 60  # 15 minutes
+
+    # How long to keep payment state in storage for recovery
+    # 30 minutes allows users to resume after client disconnections
+    # Longer than MAX_WAIT_SECONDS to handle edge cases
+    STATE_TTL_SECONDS: Final = 30 * 60  # 30 minutes
 
 
 class FlowType(Enum):
-    """Payment flow types"""
+    """
+    Payment flow types available in the PayMCP system.
+
+    Each flow type represents a different approach to handling payment and
+    tool execution, optimized for different client capabilities and user
+    experience requirements.
+
+    Flow Characteristics:
+
+    TWO_STEP:
+    - Separate payment initiation and tool execution calls
+    - Best for: Clients that can't handle interactive flows
+    - User flow: Call tool → Get payment URL → Complete payment → Call confirm tool
+    - Pros: Simple client implementation, works with any MCP client
+    - Cons: Requires two tool calls, more complex for users
+
+    PROGRESS:
+    - Single call with progress reporting during payment
+    - Best for: Clients that support progress reporting
+    - User flow: Call tool → See progress updates → Tool completes after payment
+    - Pros: Single call, good UX with progress updates
+    - Cons: Requires progress reporting support
+
+    ELICITATION:
+    - Interactive prompts for payment confirmation
+    - Best for: Clients with elicitation support (Claude Desktop, FastMCP)
+    - User flow: Call tool → Interactive prompt → Complete payment → Tool completes
+    - Pros: Best UX, feels most natural
+    - Cons: Requires elicitation support, not all clients support it
+
+    Client Compatibility:
+    - Claude Desktop: ELICITATION (preferred), PROGRESS, TWO_STEP
+    - MCP Inspector: TWO_STEP only
+    - FastMCP Python: ELICITATION (preferred), TWO_STEP
+    - Custom clients: Depends on capabilities
+    """
+
+    # Two-step flow: separate payment initiation and confirmation
     TWO_STEP = 'TWO_STEP'
+
+    # Progress flow: single call with progress reporting
     PROGRESS = 'PROGRESS'
+
+    # Elicitation flow: interactive prompts for payment
     ELICITATION = 'ELICITATION'

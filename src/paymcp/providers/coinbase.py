@@ -1,6 +1,7 @@
 
 
 from .base import BasePaymentProvider
+from ..utils.constants import PaymentStatus
 import logging
 
 BASE_URL = "https://api.commerce.coinbase.com"
@@ -69,10 +70,10 @@ class CoinbaseProvider(BasePaymentProvider):
         # Coinbase Commerce docs: last timeline entry is the current status.
         # PENDING indicates funds are received on-chain and is typically safe to treat as paid.
         if last_status in {"COMPLETED", "RESOLVED"} or (last_status == "PENDING" and self.confirm_on_pending):
-            return "paid"
+            return PaymentStatus.PAID
         if last_status in {"EXPIRED", "CANCELED"}:
-            return "failed"
+            return PaymentStatus.FAILED
         # Fallbacks
         if data.get("completed_at") or data.get("confirmed_at"):
-            return "paid"
-        return "pending"
+            return PaymentStatus.PAID
+        return PaymentStatus.PENDING
