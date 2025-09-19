@@ -143,7 +143,7 @@ class Timing:
     STATE_TTL_SECONDS: Final = 30 * 60  # 30 minutes
 
 
-class FlowType(Enum):
+class PaymentFlow(Enum):
     """
     Payment flow types - separate implementations instead of unified flow.
 
