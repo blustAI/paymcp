@@ -1,4 +1,5 @@
 from .base import BasePaymentProvider
+from ..utils.constants import PaymentStatus
 import logging
 
 
@@ -49,9 +50,9 @@ class AdyenProvider(BasePaymentProvider):
         status = payment.get("status")
 
         if status == "completed":
-            return "paid"
+            return PaymentStatus.PAID
         elif status == "active":
-            return "pending"
+            return PaymentStatus.PENDING
         elif status == "expired":
-            return "failed"
-        return status or "unknown"
+            return PaymentStatus.FAILED
+        return status or PaymentStatus.PENDING

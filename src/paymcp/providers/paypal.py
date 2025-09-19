@@ -1,6 +1,7 @@
 import requests
 from requests.auth import HTTPBasicAuth
 from .base import BasePaymentProvider
+from ..utils.constants import PaymentStatus
 import logging
 
 class PayPalProvider(BasePaymentProvider):
@@ -74,9 +75,9 @@ class PayPalProvider(BasePaymentProvider):
                     json={}
                 )
                 capture_resp.raise_for_status()
-                return "paid" if capture_resp.json()["status"] == "COMPLETED" else "pending"
+                return PaymentStatus.PAID if capture_resp.json()["status"] == "COMPLETED" else PaymentStatus.PENDING
             except Exception as e:
                 self.logger.error(f"Capture failed for {payment_id}: {e}")
-                return "pending"
-        
-        return "paid" if data["status"] == "COMPLETED" else "pending"
+                return PaymentStatus.PENDING
+
+        return PaymentStatus.PAID if data["status"] == "COMPLETED" else PaymentStatus.PENDING

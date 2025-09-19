@@ -1,5 +1,6 @@
 import requests
 from .base import BasePaymentProvider
+from ..utils.constants import PaymentStatus
 import logging
 import time
 import random
@@ -96,7 +97,7 @@ class SquareProvider(BasePaymentProvider):
             order_id = payment_link.get("order_id")
 
             if not order_id:
-                return "pending"
+                return PaymentStatus.PENDING
 
             # Check the order status
             order_resp = requests.get(
@@ -114,16 +115,16 @@ class SquareProvider(BasePaymentProvider):
 
             # If net amount due is 0, the order is fully paid
             if net_amount_due == 0:
-                return "paid"
+                return PaymentStatus.PAID
 
             # Map Square order state to standard status
             if order_state == "COMPLETED":
-                return "paid"
+                return PaymentStatus.PAID
             elif order_state == "CANCELED":
-                return "canceled"
+                return PaymentStatus.CANCELED
             else:
-                return "pending"
+                return PaymentStatus.PENDING
 
         except Exception as e:
             self.logger.error(f"Error checking Square payment status: {e}")
-            return "pending"
+            return PaymentStatus.PENDING
