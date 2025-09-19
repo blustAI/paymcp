@@ -5,6 +5,13 @@ import logging
 from typing import Dict, Any
 from ...utils.messages import open_link_message, opened_webview_message
 from ..webview import open_payment_webview_if_available
+from ...utils.context import extract_session_id, log_context_info
+from ...utils.state import (
+    check_existing_payment,
+    save_payment_state,
+    update_payment_status,
+    cleanup_payment_state
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,13 +42,8 @@ def make_paid_wrapper(func, mcp, provider, price_info, state_store=None):
     async def _confirm_tool(payment_id: str, ctx=None):
         logger.info(f"[confirm_tool] Received payment_id={payment_id}")
 
-        # Try to get session ID from context for state store
-        session_id = None
-        if ctx and hasattr(ctx, 'session'):
-            if hasattr(ctx.session, 'id'):
-                session_id = ctx.session.id
-            elif hasattr(ctx.session, 'session_id'):
-                session_id = ctx.session.session_id
+        # Extract session ID from context using utility
+        session_id = extract_session_id(ctx)
 
         # Try to retrieve args from state store first
         original_args = None
@@ -83,9 +85,9 @@ def make_paid_wrapper(func, mcp, provider, price_info, state_store=None):
         # Call the original tool with its initial arguments
         result = await func(**original_args)
 
-        # Clean up state if we used state store
-        if state_store and state_key:
-            state_store.delete(state_key)
+        # Clean up state using utility
+        if state_key:
+            cleanup_payment_state(state_key, state_store)
 
         return result
 
@@ -94,72 +96,41 @@ def make_paid_wrapper(func, mcp, provider, price_info, state_store=None):
     async def _initiate_wrapper(*args, **kwargs):
         # Extract session ID from context
         ctx = kwargs.get("ctx", None)
-        session_id = None
+        session_id = extract_session_id(ctx)
 
-        # Try to get session ID from context
-        if ctx and hasattr(ctx, 'session'):
-            if hasattr(ctx.session, 'id'):
-                session_id = ctx.session.id
-            elif hasattr(ctx.session, 'session_id'):
-                session_id = ctx.session.session_id
+        # Check for existing payment state using utility
+        payment_id, payment_url, stored_args, should_execute = check_existing_payment(
+            session_id, state_store, provider, func.__name__, kwargs
+        )
 
-        # Check for existing payment state if we have a session ID and state store
-        if session_id and state_store:
-            logger.debug(f"Checking state store for session_id={session_id}")
-            state = state_store.get(session_id)
+        # If payment was already completed, execute immediately
+        if should_execute:
+            if stored_args:
+                # Use stored arguments
+                merged_kwargs = {**kwargs}
+                merged_kwargs.update(stored_args)
+                return await func(*args, **merged_kwargs)
+            else:
+                # Execute with current arguments
+                return await func(*args, **kwargs)
 
-            if state:
-                logger.info(f"Found existing payment state for session_id={session_id}")
-                payment_id = state.get('payment_id')
-                payment_url = state.get('payment_url')
-                stored_func_name = state.get('tool_name', '')
+        # If payment exists but is still pending, return existing payment info
+        if payment_id and payment_url:
+            if (open_payment_webview_if_available(payment_url)):
+                message = opened_webview_message(
+                    payment_url, price_info["price"], price_info["currency"]
+                )
+            else:
+                message = open_link_message(
+                    payment_url, price_info["price"], price_info["currency"]
+                )
 
-                # Check payment status with provider
-                try:
-                    status = provider.get_payment_status(payment_id)
-                    logger.info(f"Payment status for {payment_id}: {status}")
-
-                    if status == "paid":
-                        # Payment already completed! Execute tool with original arguments
-                        logger.info(f"Previous payment detected, executing immediately")
-
-                        # Get original args from state
-                        original_args = state.get('tool_args', {})
-
-                        # Clean up state
-                        state_store.delete(session_id)
-
-                        # Use stored arguments if they were for this function
-                        if stored_func_name == func.__name__:
-                            # Merge stored args with current kwargs (stored args take precedence)
-                            merged_kwargs = {**kwargs}
-                            merged_kwargs.update(original_args)
-                            return await func(*args, **merged_kwargs)
-                        else:
-                            # Different function, just execute normally
-                            return await func(*args, **kwargs)
-
-                    elif status in ("pending", "processing"):
-                        # Payment still pending, return existing payment info
-                        if (open_payment_webview_if_available(payment_url)):
-                            message = opened_webview_message(
-                                payment_url, price_info["price"], price_info["currency"]
-                            )
-                        else:
-                            message = open_link_message(
-                                payment_url, price_info["price"], price_info["currency"]
-                            )
-
-                        return {
-                            "message": f"Payment still pending: {message}",
-                            "payment_url": payment_url,
-                            "payment_id": str(payment_id),
-                            "next_step": confirm_tool_name,
-                        }
-
-                except Exception as e:
-                    logger.error(f"Error checking payment status: {e}")
-                    # Continue to create new payment if error
+            return {
+                "message": f"Payment still pending: {message}",
+                "payment_url": payment_url,
+                "payment_id": str(payment_id),
+                "next_step": confirm_tool_name,
+            }
 
         # Create new payment
         payment_id, payment_url = provider.create_payment(
@@ -179,33 +150,24 @@ def make_paid_wrapper(func, mcp, provider, price_info, state_store=None):
 
         pid_str = str(payment_id)
 
-        # Store in state store if available
-        if state_store:
-            # Use session_id as primary key if available, otherwise use payment_id
-            store_key = session_id if session_id else pid_str
-            logger.info(f"Storing payment state with key={store_key}")
-            state_store.put(store_key, {
+        # Store payment state using utility
+        save_payment_state(
+            session_id, state_store, payment_id, payment_url,
+            func.__name__, kwargs, 'requested'
+        )
+
+        # Also store by payment_id for backward compatibility with two-step flow
+        if state_store and session_id and session_id != pid_str:
+            state_store.put(pid_str, {
                 'session_id': session_id,
                 'payment_id': payment_id,
                 'payment_url': payment_url,
                 'tool_name': func.__name__,
-                'tool_args': kwargs,  # Store all kwargs for replay
+                'tool_args': kwargs,
                 'status': 'requested',
                 'created_at': time.time()
             })
-
-            # Also store by payment_id for backward compatibility
-            if session_id and store_key != pid_str:
-                state_store.put(pid_str, {
-                    'session_id': session_id,
-                    'payment_id': payment_id,
-                    'payment_url': payment_url,
-                    'tool_name': func.__name__,
-                    'tool_args': kwargs,
-                    'status': 'requested',
-                    'created_at': time.time()
-                })
-        else:
+        elif not state_store:
             # Fall back to legacy PENDING_ARGS
             PENDING_ARGS[pid_str] = kwargs
 

@@ -6,6 +6,13 @@ import logging
 from typing import Any, Dict, Optional
 from ...utils.messages import open_link_message, opened_webview_message
 from ..webview import open_payment_webview_if_available
+from ...utils.context import extract_session_id, log_context_info
+from ...utils.state import (
+    check_existing_payment,
+    save_payment_state,
+    update_payment_status,
+    cleanup_payment_state
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,14 +38,12 @@ def make_paid_wrapper(
     async def _progress_wrapper(*args, **kwargs):
         # Extract session ID from context
         ctx = kwargs.get("ctx", None)
-        session_id = None
 
-        # Try to get session ID from context
-        if ctx and hasattr(ctx, 'session'):
-            if hasattr(ctx.session, 'id'):
-                session_id = ctx.session.id
-            elif hasattr(ctx.session, 'session_id'):
-                session_id = ctx.session.session_id
+        # Optional: log context info for debugging
+        log_context_info(ctx)
+
+        # Extract session ID using utility function
+        session_id = extract_session_id(ctx)
 
         # Helper to emit progress safely
         async def _notify(message: str, progress: Optional[int] = None):
@@ -49,70 +54,22 @@ def make_paid_wrapper(
                     total=100,
                 )
 
-        # Check for existing payment state if we have a session ID and state store
-        if session_id and state_store:
-            logger.debug(f"Checking state store for session_id={session_id}")
-            state = state_store.get(session_id)
+        # Check for existing payment state
+        payment_id, payment_url, stored_args, should_execute = check_existing_payment(
+            session_id, state_store, provider, func.__name__, kwargs
+        )
 
-            if state:
-                logger.info(f"Found existing payment state for session_id={session_id}")
-                payment_id = state.get('payment_id')
-                payment_url = state.get('payment_url')
-                stored_args = state.get('tool_args', {})
-                stored_func_name = state.get('tool_name', '')
-
-                # Check payment status with provider
-                try:
-                    status = provider.get_payment_status(payment_id)
-                    logger.info(f"Payment status for {payment_id}: {status}")
-
-                    if status == "paid":
-                        # Payment already completed! Execute tool with original arguments
-                        await _notify("Previous payment detected — executing with original request …", progress=100)
-
-                        # Clean up state
-                        state_store.delete(session_id)
-
-                        # Use stored arguments if they were for this function
-                        if stored_func_name == func.__name__:
-                            # Merge stored args with current kwargs (stored args take precedence)
-                            merged_kwargs = {**kwargs}
-                            merged_kwargs.update(stored_args)
-                            return await func(*args, **merged_kwargs)
-                        else:
-                            # Different function, just execute normally
-                            return await func(*args, **kwargs)
-
-                    elif status in ("pending", "processing"):
-                        # Payment still pending, show the payment URL again
-                        await _notify(
-                            f"Payment still pending — please complete payment at: {payment_url}",
-                            progress=50
-                        )
-
-                        # Continue to polling loop below
-                        # Don't create a new payment
-
-                    elif status in ("canceled", "expired", "failed"):
-                        # Payment failed, clean up and create new one
-                        logger.info(f"Previous payment {status}, creating new payment")
-                        state_store.delete(session_id)
-                        # Fall through to create new payment
-                        payment_id = None
-                        payment_url = None
-
-                except Exception as e:
-                    logger.error(f"Error checking payment status: {e}")
-                    # If we can't check status, create a new payment
-                    state_store.delete(session_id)
-                    payment_id = None
-                    payment_url = None
+        # If payment was already completed, execute immediately
+        if should_execute:
+            await _notify("Previous payment detected — executing with original request …", progress=100)
+            if stored_args:
+                # Use stored arguments
+                merged_kwargs = {**kwargs}
+                merged_kwargs.update(stored_args)
+                return await func(*args, **merged_kwargs)
             else:
-                payment_id = None
-                payment_url = None
-        else:
-            payment_id = None
-            payment_url = None
+                # Execute with current arguments
+                return await func(*args, **kwargs)
 
         # Create new payment if needed
         if not payment_id:
@@ -161,19 +118,14 @@ def make_paid_wrapper(
             if status == "paid":
                 await _notify("Payment received — generating result …", progress=100)
 
-                # Update state to paid if we have state store
-                if session_id and state_store:
-                    state = state_store.get(session_id)
-                    if state:
-                        state['status'] = 'paid'
-                        state_store.put(session_id, state)
+                # Update state to paid
+                update_payment_status(session_id, state_store, 'paid')
 
                 break
 
             if status in ("canceled", "expired", "failed"):
                 # Clean up state on failure
-                if session_id and state_store:
-                    state_store.delete(session_id)
+                cleanup_payment_state(session_id, state_store)
                 raise RuntimeError(f"Payment status is {status}, expected 'paid'")
 
             # Still pending → ping progress
@@ -181,19 +133,14 @@ def make_paid_wrapper(
 
         else:  # loop exhausted
             # Don't delete state on timeout - payment might still complete
-            if session_id and state_store:
-                state = state_store.get(session_id)
-                if state:
-                    state['status'] = 'timeout'
-                    state_store.put(session_id, state)
+            update_payment_status(session_id, state_store, 'timeout')
             raise RuntimeError("Payment timeout reached; aborting")
 
         # Call the underlying tool with its original args/kwargs
         result = await func(*args, **kwargs)
 
         # Clean up state after successful execution
-        if session_id and state_store:
-            state_store.delete(session_id)
+        cleanup_payment_state(session_id, state_store)
 
         return result
 
