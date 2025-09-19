@@ -92,7 +92,10 @@ Open the payment link in a native window when your MCP server is connected via t
 
 ## 🧩 Supported Providers
 - ✅ [Adyen](https://www.adyen.com)
+- ✅ [Coinbase Commerce](https://commerce.coinbase.com)
+- ✅ [PayPal](https://paypal.com)
 - ✅ [Stripe](https://stripe.com)
+- ✅ [Square](https://squareup.com)
 - ✅ [Walleot](https://walleot.com/developers)
 - 🔜 Want another provider? Open an issue or submit a pull request!
 
