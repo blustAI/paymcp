@@ -52,7 +52,7 @@ Initialize `PayMCP`:
 from mcp.server.fastmcp import FastMCP, Context
 from paymcp import PayMCP, price, PaymentFlow
 
-mcp = FastMCP("AI agent name")
+mcp = FastMCP("agent name")
 PayMCP(
     mcp,  # your FastMCP instance
     providers={
@@ -72,7 +72,7 @@ def add(a: int, b: int, ctx: Context) -> int:
     return a + b
 ```
 
-> **Demo server:** For a complete setup, see the example repo: [python-paymcp-server-demo](https://github.com/blustAI/python-paymcp-server-demo).
+> **Demo server:** For a complete setup, see the example repo: [python-paymcp-server-demo](https://github.com/PayMCP/python-paymcp-server-demo).
 
 
 ---

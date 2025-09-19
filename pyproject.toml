@@ -3,16 +3,25 @@ name = "paymcp"
 version = "0.1.2"
 description = "Provider-agnostic payment layer for MCP (Model Context Protocol) tools and agents."
 authors = [
-    {name = "Blust Inc", email = "info@blust.ai"},
+    {name = "Walleot", email = "info@walleot.com"},
 ]
-dependencies = ["requests>=2.32.4", "pydantic>=2.11.7"]
+keywords = ["mcp", "payment", "stripe", "paypal", "square", "adyen", "coinbase", "walleot"]
+dependencies = [
+    "requests>=2.32.4",
+    "pydantic>=2.11.7"
+]
 requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
+homepage = "https://github.com/PayMCP/paymcp"
+repository = "https://github.com/PayMCP/paymcp"
+documentation = "https://github.com/PayMCP/paymcp#readme"
 
 
 [project.optional-dependencies]
-webview = ["pywebview>=4.0"]        # pip/pdm install paymcp[webview]
+redis = ["redis>=5.0.0"]            # pip install paymcp[redis]
+webview = ["pywebview>=4.0"]        # pip install paymcp[webview]
+all = ["redis>=5.0.0", "pywebview>=4.0"]  # pip install paymcp[all]
 
 [build-system]
 requires = ["pdm-backend"]
