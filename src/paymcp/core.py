@@ -4,6 +4,7 @@ from .providers import build_providers
 from .utils.messages import description_with_price
 from .payment.flows import make_flow
 from .payment.payment_flow import PaymentFlow
+from .state_store import StateStoreProvider, InMemoryStore
 from importlib.metadata import version, PackageNotFoundError
 import logging
 logger = logging.getLogger(__name__)
@@ -14,12 +15,15 @@ except PackageNotFoundError:
     __version__ = "unknown"
 
 class PayMCP:
-    def __init__(self, mcp_instance, providers=None, payment_flow: PaymentFlow = PaymentFlow.TWO_STEP):
+    def __init__(self, mcp_instance, providers=None, payment_flow: PaymentFlow = PaymentFlow.TWO_STEP, state_store: StateStoreProvider = None):
         logger.debug(f"PayMCP v{__version__}")
         flow_name = payment_flow.value
         self._wrapper_factory = make_flow(flow_name)
         self.mcp = mcp_instance
         self.providers = build_providers(providers or {})
+        # Initialize state store (default to InMemoryStore)
+        self.state_store = state_store or InMemoryStore()
+        logger.info(f"PayMCP initialized with flow={payment_flow.value}, state_store={self.state_store.__class__.__name__}")
         self._patch_tool()
 
     def _patch_tool(self):
@@ -40,7 +44,7 @@ class PayMCP:
                     # Deferred payment creation, so do not call provider.create_payment here
                     kwargs["description"] = description_with_price(kwargs.get("description") or func.__doc__ or "", price_info)
                     target_func = self._wrapper_factory(
-                        func, self.mcp, provider, price_info
+                        func, self.mcp, provider, price_info, self.state_store
                     )
                 else:
                     target_func = func
